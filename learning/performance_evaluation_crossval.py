@@ -690,7 +690,28 @@ def get_allfolds_bigdf(foldrootpath, annottype, featset, labelunion):
     
         
         
+
+def evaluate_crossfeatures(scoresroot):
+    
+    featclasses = IOtools.getfoldernames_of_dir(scoresroot)
+    
+    for featureclass in featclasses:
         
+        p1 = os.path.join(scoresroot, featureclass)
+        lunions = IOtools.getfoldernames_of_dir(p1)
+        
+        for labelunion in lunions:
+            
+            p2 = os.path.join(p1, labelunion)  # foldspath
+      
+            get_allfolds_bigdf(foldrootpath=p2, 
+                               annottype=featureclass, 
+                               featset=featureclass, 
+                               labelunion=labelunion)
+            
+            get_fold_averages(p2)
+
+       
 
 def evaluate_crosscorpus(scoresroot):
     
@@ -733,7 +754,9 @@ def evaluate_bogbaseline(foldpath):
     get_fold_averages(foldpath)
     
             
-            
+def evaluate_charngrams(foldpath, annottype, featset, labelunion):
+    get_allfolds_bigdf(foldpath, annottype, featset, labelunion)         
+    get_fold_averages(foldpath)        
             
             
 def get_fold_averages(resultspath):

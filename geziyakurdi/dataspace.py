@@ -11,6 +11,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import pickle
 import numpy as np
+import math
 
 from txtprocessor import texter, listutils, dateutils
 from sentimentfinding import IOtools
@@ -19,7 +20,7 @@ from languagetools import SAKsParser
 from sentimentfinding import CFDhelpers
 from sentimentfinding import plotter
 from stats import classification
-import Corpus
+from sentimentfinding import Corpus, corpusfeatures
 
 
 
@@ -161,7 +162,7 @@ def buildcorpus(nfile, ncat, resourcename, path):
         fileids = []
         p = resourcepath + os.sep + catname + os.sep
         fileids.extend(IOtools.getfilenames_of_dir(p, removeextension=False)[:nfile])
-        corpus = CorpusFeatures(fileids, resourcename+os.sep+catname, p)
+        corpus = corpusfeatures.CorpusFeatures(fileids, resourcename+os.sep+catname, p)
         corpus.getfeatures()
         datapoints = corpus.build_featurematrix()
         for k,v in datapoints.iteritems():

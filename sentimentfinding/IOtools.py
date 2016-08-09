@@ -109,6 +109,8 @@ def todisc_matrix(matrix, path, mode="w"):
             outstr = outstr + str(item) + "\t"
         f.write(outstr+"\n")
     f.close()
+    
+
 
 def todisc_txt(txt, path, mode="w"):
     f = codecs.open(path, mode, encoding='utf8')

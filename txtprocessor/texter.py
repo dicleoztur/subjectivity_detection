@@ -103,12 +103,13 @@ def getnewsitem(path, nostopwords=True):
 
 ''' splits the input by space, eliminates punctuation from each word and removes empty ones. can also eliminate stopwords
     returns the list of words   '''
-def getwords(rawtext, nostopwords=True):
+def getwords(rawtext, nopunctuation=True, nostopwords=True):
     words = rawtext.split()
     words = [word.strip() for word in words] # if (not word.isspace()) or (not len(word) == 0)]
     words = [word for word in words if (not word.isspace()) or (len(word) > 0)]
     words = filter(lambda x : len(x) > 0, words)
-    words = eliminatepunctuation(words)
+    if nopunctuation:
+        words = eliminatepunctuation(words)
     
     if nostopwords:
         stopwords = readtextlines(stopwordsbase)

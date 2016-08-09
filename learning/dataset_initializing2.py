@@ -238,9 +238,9 @@ if __name__ == "__main__":
     sizes = [50, 150, 345, 504, 700]   # how to un-hardcode these values?
     
     for annottype in [ "double"]:
-        recordpath = read_corpus(annotationtype=annottype)
-        print recordpath
-    
+        #recordpath = read_corpus(annotationtype=annottype)
+        #print recordpath
+        print sizes
     
     
     

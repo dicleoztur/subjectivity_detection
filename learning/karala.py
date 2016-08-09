@@ -4,6 +4,22 @@ Created on Jul 28, 2014
 @author: dicle
 '''
 
+from nltk import ConditionalFreqDist
+
+
+def subword_char_ngram(text_fileid_map, n):
+    corpus_ngramitems = []
+    for tid, text in text_fileid_map.iteritems():
+        words = text.split()
+        ngramitems = []
+        for w in words:
+            ngramitems.extend(ngrams(w, n))
+        for ngramitem in ngramitems:
+            corpus_ngramitems.append((tid, ngramitem))
+    cfd = ConditionalFreqDist(corpus_ngramitems)
+    print cfd.N()," ",len(cfd.conditions())
+    return cfd
+    CFDhelpers.cfd2csv(cfd=cfd, csvpath=csvpath)
 
 def conduct_cross_validation_notest(k=10,
                              #annotationtype="double",

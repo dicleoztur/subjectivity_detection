@@ -12,13 +12,12 @@ from sklearn import preprocessing, metrics
 
 import math
 import random
-import pandas as pd
 import numpy as np
 import os
 import time, multiprocessing
 
 
-import metaexperimentation, matrixhelpers, arrange_N_classes, utils, performance_evaluation_crossval
+import metaexperimentation, utils
 from corpus import metacorpus
 from sentimentfinding import IOtools
 from txtprocessor import listutils
@@ -198,7 +197,7 @@ class SVM(LearningExperiment):
     
     standardize = False  
     
-    def __init__(self, erootpath, kernels=["rbf"], C=[1], degrees=[], standardize=False): 
+    def __init__(self, erootpath, kernels=["rbf"], C=[1], degrees=[], standardize=False):
         LearningExperiment.__init__(self, erootpath)
         
         self.methodname = "classification"
@@ -844,12 +843,7 @@ def conduct_cross_validation_notest(k=5,
                             
 
 
-def get_training_set(annotationtype, agreementtype, featureclass, combfilename):
-    
-    Xpath = os.path.join(datasetspath, combfile + ".csv")
-    
-    
-    return instanceids, Xpath
+
 
 
 
@@ -897,9 +891,10 @@ class corpus_definer():
         Xpath = os.path.join(datasetspath, combfilename + ".csv")
         return Xpath
     
-    def get_bog_Xpath(self):
+    def get_bow_Xpath(self, bow_fname):
         rawfeaturespath = os.path.join(metacorpus.learningdatapath, self.annotationtype, "rawfeatures")
-        Xpath = os.path.join(rawfeaturespath, "contenttermCOUNT.csv")
+        #Xpath = os.path.join(rawfeaturespath, "contenttermCOUNT.csv")
+        Xpath = os.path.join(rawfeaturespath, bow_fname)
         return Xpath
     
     def get_labelitems(self):
@@ -951,11 +946,97 @@ class corpus_definer():
         
 
 
-def bog_baseline_classification(rootpath, 
+def charngram_classification(rootpath, 
+                                charngram_csv_fname,
+                                charngramXpath,
                                 featureclass='redef-rat_lex-rat',
-                                combfilename='comb975_F_0-0_1-1_2-1_3-3_4-0_5-1_6-1_7-0_8-3',
-                                labelunion='ALLobj-ALLsubj_NC-2',
-                                experimentname='bogfeatures_baseline'):
+                                labelunion='ALLobj-ALLsubj_NC-2'):
+    # use (super,sub)ngrams.csv as features which includes 11167 stemmed terms counted
+    
+    corpus = corpus_definer("double", "fullagr", labelunion, "corpus1")
+    
+    labelfolderitems = labelunion.split(metaexperimentation.interfeatsep)
+    labelunionname = labelfolderitems[0]
+    ncstr = labelfolderitems[1]
+    nc = ncstr.split(metaexperimentation.intrafeatsep)[-1]
+    nc = int(nc)
+    
+    scorespath = IOtools.ensure_dir(os.path.join(rootpath, featureclass, labelunionname))
+    print scorespath
+    # classify
+    Xpath = charngramXpath
+    labelitems = corpus.get_labelitems()
+         
+    cross_validation_experiment(outpath=scorespath, 
+                                Xtrain_path=Xpath, 
+                                Xtest_path=Xpath, 
+                                train_labelitems=labelitems, 
+                                test_labelitems=labelitems)
+        
+
+# for comparison purposes (Ng,Dasgupta&Arifin06)
+def binarypresence_classification(rootpath,                                
+                                binpresXpath,
+                                featureclass,
+                                labelunion,
+                                nfolds=10):
+    # use (super,sub)ngrams.csv as features which includes 11167 stemmed terms counted
+    
+    corpus = corpus_definer("double", "fullagr", labelunion, "corpus1")
+    
+    labelfolderitems = labelunion.split(metaexperimentation.interfeatsep)
+    labelunionname = labelfolderitems[0]
+    ncstr = labelfolderitems[1]
+    nc = ncstr.split(metaexperimentation.intrafeatsep)[-1]
+    nc = int(nc)
+    
+    scorespath = IOtools.ensure_dir(os.path.join(rootpath, featureclass, labelunionname))
+    print scorespath
+    # classify
+    Xpath = binpresXpath
+    labelitems = corpus.get_labelitems()
+         
+    cross_validation_experiment(outpath=scorespath, 
+                                Xtrain_path=Xpath, 
+                                Xtest_path=Xpath, 
+                                train_labelitems=labelitems, 
+                                test_labelitems=labelitems,
+                                k=nfolds)
+
+
+
+def standard_classification(rootpath,                                
+                                Xpath,
+                                featureclass,
+                                labelunion,
+                                nfolds=10):
+    # use (super,sub)ngrams.csv as features which includes 11167 stemmed terms counted
+    
+    corpus = corpus_definer("double", "fullagr", labelunion, "corpus1")
+    
+    labelfolderitems = labelunion.split(metaexperimentation.interfeatsep)
+    labelunionname = labelfolderitems[0]
+    ncstr = labelfolderitems[1]
+    nc = ncstr.split(metaexperimentation.intrafeatsep)[-1]
+    nc = int(nc)
+    
+    scorespath = IOtools.ensure_dir(os.path.join(rootpath, featureclass, labelunionname))
+    print scorespath
+    # classify
+    labelitems = corpus.get_labelitems()
+         
+    cross_validation_experiment(outpath=scorespath, 
+                                Xtrain_path=Xpath, 
+                                Xtest_path=Xpath, 
+                                train_labelitems=labelitems, 
+                                test_labelitems=labelitems,
+                                k=nfolds)
+
+
+def bog_baseline_classification(rootpath, 
+                                bow_csv_fname,
+                                featureclass='redef-rat_lex-rat',
+                                labelunion='ALLobj-ALLsubj_NC-2'):
     # use contenttermCOUNT.csv as features which includes 11167 stemmed terms counted
     
     corpus = corpus_definer("double", "fullagr", labelunion, "corpus1")
@@ -969,7 +1050,7 @@ def bog_baseline_classification(rootpath,
     scorespath = IOtools.ensure_dir(os.path.join(rootpath, featureclass, labelunionname))
     
     # classify
-    Xpath = corpus.get_bog_Xpath()
+    Xpath = corpus.get_bow_Xpath(bow_csv_fname)
     labelitems = corpus.get_labelitems()
 
     #experimentname = "bogfeatures_baseline"
@@ -982,8 +1063,49 @@ def bog_baseline_classification(rootpath,
                                 train_labelitems=labelitems, 
                                 test_labelitems=labelitems)
             
+
+
+def experiment(rootpath, 
+               featureclass='redef-rat_lex-rat',
+               combfilename='comb975_F_0-0_1-1_2-1_3-3_4-0_5-1_6-1_7-0_8-3',
+               labelunion='ALLobj-ALLsubj_NC-2'):  
+    
+    corpus = corpus_definer("double", "fullagr", labelunion, "corpus")
+    
+    labelfolderitems = labelunion.split(metaexperimentation.interfeatsep)
+    labelunionname = labelfolderitems[0]
+    ncstr = labelfolderitems[1]
+    nc = ncstr.split(metaexperimentation.intrafeatsep)[-1]
+    nc = int(nc)
+    
+    outputpath = IOtools.ensure_dir(os.path.join(rootpath, featureclass, labelunionname))
+      
+    
+    scorespath = IOtools.ensure_dir(os.path.join(outputpath))
     
     
+    Xpath = corpus.get_Xpath(combfilename)
+    labelitems = corpus.get_labelitems()
+    
+    
+    # mix train labelitems
+    trainlabelitems = labelitems.copy()
+    '''for label in trainlabelitems.keys():
+        l = trainlabelitems[label]
+        print "before mix: ",l[:5]
+        random.shuffle(l)
+        trainlabelitems[label] = l
+        print "after mix: ",l[:5]'''
+                       
+    cross_validation_experiment(outpath=scorespath, 
+                                Xtrain_path=Xpath, 
+                                Xtest_path=Xpath, 
+                                train_labelitems=trainlabelitems, 
+                                test_labelitems=labelitems)
+    
+    
+    
+            
 
 def split_for_cross_corpus(rootpath, 
                            featureclass='redef-rat_lex-rat',
@@ -1100,6 +1222,90 @@ def cross_validation_experiment(outpath, Xtrain_path, Xtest_path, train_labelite
         # for xpath in xpath_list:
         for label, fileids in train_labelitems.iteritems():
             nvalid = utils.get_nsplit(len(fileids), metaexperimentation.validationpercentage)
+            # only for cross-corpus
+            #nvalid = 1 
+                    
+            instanceids = fileids   #fileids[:-ntest]
+            validstart = (foldno * (nvalid + 1)) % len(instanceids)
+            validfinish = (validstart + nvalid) % len(instanceids)
+            
+            print "folds ",foldno
+            print validstart,"  ",validfinish
+            
+            trainids = utils.gettrainset(instanceids, validstart, validfinish)  # fileids to be included in the train set
+            
+            # mix
+            #random.shuffle(trainids)
+            
+            trainitems.extend([(fileid, label) for fileid in trainids])
+            
+        
+        # mix
+        #random.shuffle(trainitems)    
+            
+        # get test items                
+        for label, fileids in test_labelitems.iteritems():
+            nvalid = utils.get_nsplit(len(fileids), metaexperimentation.validationpercentage)
+        
+            
+            instanceids = fileids   #fileids[:-ntest]
+            validstart = (foldno * (nvalid + 1)) % len(instanceids)
+            validfinish = (validstart + nvalid) % len(instanceids)
+            
+            testids = utils.gettestset(instanceids, validstart, validfinish)  # fileids to be included in the test set
+            testitems.extend([(fileid, label) for fileid in testids])
+
+
+        # ensure train and test sets do not intersect
+        trainfileids = [fileid for fileid,_ in trainitems]
+        testfileids = [fileid for fileid,_ in testitems]
+        common = listutils.getintersectionoflists(trainfileids, testfileids) 
+        print "\n",outpath
+        print "  tr: ",trainfileids[:5]
+        print "  ts: ",testfileids[:5]
+        print "NUM OF COMMON ITEMS: ",len(common)
+        print "common items: ",common
+        
+        
+        print " ntrain before: ",len(trainitems)
+        # remove colliding items from train set
+        filtered_trainitems = []
+        for fileid,label in trainitems:
+            if fileid not in common:
+                filtered_trainitems.append((fileid, label))
+                
+        trainitems = filtered_trainitems
+        print " ntrain after: ",len(trainitems)
+        
+        foldpath = IOtools.ensure_dir(os.path.join(outpath, "fold-"+str(foldno)))
+        
+        metaexperimentation.initialize_score_file(foldpath)
+        
+        IOtools.tocsv_lst(trainitems, os.path.join(foldpath, "trainitems.csv"))
+        IOtools.tocsv_lst(testitems, os.path.join(foldpath, "testitems.csv"))
+        
+       
+        Xtrain, ytrain = utils.tuple2matrix(trainitems, Xtrain_path)
+        Xtest, ytest = utils.tuple2matrix(testitems, Xtest_path)
+        
+        # classify
+        run_models(foldpath, Xtrain, ytrain, Xtest, ytest)
+       
+    
+
+
+'''
+def cross_validation_experiment(outpath, Xtrain_path, Xtest_path, train_labelitems, test_labelitems, k=5):
+    
+    for foldno in range(k):
+        # both will contain (fileid, label) 
+        trainitems = []  
+        testitems = []
+        
+        # get train items
+        # for xpath in xpath_list:
+        for label, fileids in train_labelitems.iteritems():
+            nvalid = utils.get_nsplit(len(fileids), metaexperimentation.validationpercentage)
                     
             instanceids = fileids   #fileids[:-ntest]
             validstart = (foldno * (nvalid + 1)) % len(instanceids)
@@ -1151,22 +1357,22 @@ def cross_validation_experiment(outpath, Xtrain_path, Xtest_path, train_labelite
         IOtools.tocsv_lst(trainitems, os.path.join(foldpath, "trainitems.csv"))
         IOtools.tocsv_lst(testitems, os.path.join(foldpath, "testitems.csv"))
         
-        '''
+        
         Xtrain, ytrain = utils.tuple2matrix(trainitems, Xtrain_path)
         Xtest, ytest = utils.tuple2matrix(testitems, Xtest_path)
         
         # classify
         run_models(foldpath, Xtrain, ytrain, Xtest, ytest)
-        '''
-    
-    
+'''        
+      
     
 def run_models(foldpath, Xtrain, ytrain, Xtest, ytest):
     
     models = []    
     svmclassifier = SVM("", standardize=True)
+    nbclassifier = NaiveBayes("", normalize=True)
 
-    models = [svmclassifier]
+    models = [svmclassifier, nbclassifier]
     
     for model in models:
         model.set_score_folder(foldpath)
